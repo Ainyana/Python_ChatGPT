@@ -38,10 +38,13 @@ def page1():
 @app.route("/members")
 def members():
     return {"members":["Member1","Member2"]}
+query = []
+frames = []  # Initialize array to store frames
+
 
 @app.route("/recording")
 def recording():
-    print("Recording")
+    print("Recording for 10 seconds")
     p = pyaudio.PyAudio()  # Create an interface to PortAudio
     stream = p.open(format=sample_format,
                     channels=channels,
@@ -49,7 +52,7 @@ def recording():
                     frames_per_buffer=chunk,
                     input=True)
 
-    frames = []  # Initialize array to store frames
+    # frames = []  # Initialize array to store frames
 
     # Store data in chunks for 3 seconds
     for i in range(0, int(fs / chunk * seconds)):
@@ -63,29 +66,31 @@ def recording():
     p.terminate()
 
     print('Finished recording')
-    # wf = wave.open(filename, 'wb')
-    # wf.setnchannels(channels)
-    # wf.setsampwidth(p.get_sample_size(sample_format))
-    # wf.setframerate(fs)
-    # wf.writeframes(b''.join(frames))
-    # wf.close()
+    
+    # Save the recorded data as a WAV file
+    wf = wave.open(filename, 'wb')
+    wf.setnchannels(channels)
+    wf.setsampwidth(p.get_sample_size(sample_format))
+    wf.setframerate(fs)
+    wf.writeframes(b''.join(frames))
+    wf.close()
 
-    #     # Define OpenAI API key 
-    # openai.api_key = "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"
+    # # Define OpenAI API key 
+    # openai.api_key = "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"
 
     # # Set up the model and prompt
-    # model_engine = "text-davinci-003"
-    # # prompt = "Once upon a time, in a land far, far away, there was a princess who..."
-    # sr = s.Recognizer()
-    # # print("Speak something")
-
-    # query = []
-    # with s.WavFile('output.wav') as m:
-    #     audio = sr.listen(m)
-    #     query = sr.recognize_google(audio)
-    # #   print(query)
-    # # print(query)
-
+    model_engine = "text-davinci-003"
+    print("model")
+    print(model_engine)
+    # prompt = "Once upon a time, in a land far, far away, there was a princess who..."
+    sr = s.Recognizer()
+    # print("Speak something")
+    query = []
+    with s.WavFile('output.wav') as m:
+        audio = sr.listen(m)
+        query = sr.recognize_google(audio)
+        print('query now')
+        print(query)
 
     # # Generate a response
     # completion = openai.Completion.create(
@@ -100,8 +105,61 @@ def recording():
     # response = completion.choices[0].text
     # print(response)
 
+    return (query)
 
-    return (data)
+@app.route("/chatgpt")
+def chatgpt():
+    p = pyaudio.PyAudio()  # Create an interface to PortAudio
+    
+    # Save the recorded data as a WAV file
+    wf = wave.open(filename, 'wb')
+    wf.setnchannels(channels)
+    wf.setsampwidth(p.get_sample_size(sample_format))
+    wf.setframerate(fs)
+    wf.writeframes(b''.join(frames))
+    wf.close()
+
+    # Define OpenAI API key 
+    openai.api_key = "Key"
+
+    # Set up the model and prompt
+    model_engine = "text-davinci-003"
+    # prompt = "Once upon a time, in a land far, far away, there was a princess who..."
+    sr = s.Recognizer()
+    # print("Speak something")
+
+    query = []
+    with s.WavFile('output.wav') as m:
+        audio = sr.listen(m)
+        query = sr.recognize_google(audio)
+        print(query)
+
+    # Generate a response
+    completion = openai.Completion.create(
+        engine=model_engine,
+        prompt=query,
+        max_tokens=1024,
+        n=1,
+        stop=None,
+        temperature=0.5,
+    )
+    print("Open AI Response")
+    response = completion.choices[0].text
+    print(response)
+    
+    print("Question to ChatGPT")
+    playsound("output.wav")  
+
+    print("Chat GPT Answer")
+    t1 = gtts.gTTS(response,lang='hi')
+    t1.save("welcome.mp3")   
+    playsound("welcome.mp3")  
+
+
+
+
+    return (completion.choices[0].text)
+
  
 
 if __name__ == "__main__":
